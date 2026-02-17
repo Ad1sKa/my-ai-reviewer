@@ -4,8 +4,12 @@ from huggingface_hub import InferenceClient
 # 1. Настройка страницы (профессиональный заголовок)
 st.set_page_config(page_title="ReviewAI Pro", page_icon="✨", layout="wide")
 
-# Подключение ключа
-hf_token = st.secrets["HF_TOKEN"]
+# Подключение ключа (Убедитесь, что ключ добавлен в Settings -> Secrets на Streamlit)
+try:
+    hf_token = st.secrets["HF_TOKEN"]
+except Exception:
+    st.error("Критическая ошибка: Токен HF_TOKEN не найден в Secrets!")
+    st.stop()
 
 # 2. Обновленные словари (только нужные языки)
 languages = {
@@ -52,6 +56,7 @@ st.markdown("""
     .stButton>button:hover {
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+        color: white;
     }
 
     /* Поле результата */
@@ -82,7 +87,9 @@ st.title(t["title"])
 st.markdown(f"<p style='font-size: 1.2rem; color: #94a3b8;'>{t['subtitle']}</p>", unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
 
-col1, col2 = st.columns(2, gap="large")with col1:
+col1, col2 = st.columns(2, gap="large")
+
+with col1:
     st.subheader(f"📝 {t['task']}")
     action = st.selectbox("Тип текста", [t["opt1"], t["opt2"]], label_visibility="collapsed")
     
@@ -99,7 +106,7 @@ with col2:
                 try:
                     client = InferenceClient(model="mistralai/Mistral-7B-Instruct-v0.2", token=hf_token)
                     
-                    # УСИЛЕННЫЙ ПРОМПТ (Запрет матов и только выбранный язык)
+                    # УСИЛЕННЫЙ ПРОМПТ
                     system_instruction = (
                         f"You are a professional copywriter. Write a text in {lang_choice} language ONLY. "
                         "STRICT RULES: 1. No swear words or profanity. 2. No English words in the final text. "
@@ -117,6 +124,6 @@ with col2:
                     st.markdown(f'<div class="result-area">{final_text}</div>', unsafe_allow_html=True)
                     st.balloons()
                 except Exception as e:
-                    st.error(f"Упс! Что-то пошло не так. Проверьте токен или интернет.")
+                    st.error(f"Упс! Что-то пошло не так. Проверьте соединение или лимиты API.")
         else:
             st.warning("⚠️ Пожалуйста, напишите детали ситуации!")
